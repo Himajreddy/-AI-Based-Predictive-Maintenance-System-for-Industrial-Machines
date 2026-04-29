@@ -1,317 +1,305 @@
-# 🔧 AI-Based Predictive Maintenance System
+# Predictive Maintenance System for Industrial Equipment
 
-> *Predict machine failure before it happens — saving downtime, money, and lives.*
+## Project Summary
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
-![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3-orange)
-![XGBoost](https://img.shields.io/badge/XGBoost-1.7-green)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.28-red)
-![License](https://img.shields.io/badge/License-MIT-lightgrey)
+Industrial equipment rarely fails without warning. In most cases, machines show measurable signs of degradation long before breakdown. The challenge is identifying those patterns early enough to act.
 
----
+This project builds a machine learning-based predictive maintenance system designed to estimate equipment health from sensor data and support maintenance decisions before failure occurs.
 
-## 📋 Table of Contents
+The system performs two separate but connected tasks:
 
-1. [Problem Statement](#problem-statement)
-2. [Business Impact](#business-impact)
-3. [Dataset](#dataset)
-4. [Methodology](#methodology)
-5. [Models Used](#models-used)
-6. [Results](#results)
-7. [Project Structure](#project-structure)
-8. [Installation](#installation)
-9. [Usage](#usage)
-10. [Deployment](#deployment)
-11. [Future Improvements](#future-improvements)
+* **Failure Risk Detection** → predicts whether a machine is approaching failure
+* **Remaining Useful Life Estimation (RUL)** → estimates how long the machine can continue operating before maintenance becomes critical
+
+The project uses a real benchmark dataset and combines preprocessing, feature engineering, model benchmarking, explainability, and deployment into a complete production-style workflow.
 
 ---
 
-## 1. Problem Statement
+## Problem Statement
 
-Industrial machines fail unexpectedly, causing **unplanned downtime**, costly emergency repairs, and in severe cases, safety incidents. Traditional maintenance is either:
+Maintenance strategies in industrial environments usually fall into two categories:
 
-- **Reactive** — fix it after it breaks (expensive)
-- **Scheduled** — replace parts on a fixed calendar (wasteful)
+**Reactive maintenance**
+Machines are repaired only after failure.
 
-This project builds a **condition-based, AI-driven predictive maintenance system** that analyses real-time sensor data to:
+**Scheduled maintenance**
+Machines are serviced at fixed intervals whether necessary or not.
 
-1. **Predict whether a machine will fail** (binary classification)
-2. **Estimate Remaining Useful Life** in hours (regression)
+Both approaches create inefficiencies.
 
----
+Predictive maintenance introduces a smarter alternative by using historical sensor data to predict degradation patterns and optimize maintenance timing.
 
-## 2. Business Impact
-
-| Metric | Industry Benchmark |
-|---|---|
-| Unplanned downtime cost | $260,000/hour (manufacturing) |
-| Reduction in maintenance cost with PdM | 10–25% |
-| Increase in equipment uptime | 10–20% |
-| ROI of predictive maintenance | 10× on average |
-
-By accurately flagging at-risk machines hours or days in advance, maintenance teams can:
-- Schedule targeted repairs during planned stops
-- Reduce spare parts inventory
-- Prevent catastrophic failures and safety incidents
+The objective of this system is to convert raw operational signals into actionable maintenance intelligence.
 
 ---
 
-## 3. Dataset
+## Dataset Information
 
-**Source:** [Kaggle — AI4I Predictive Maintenance Dataset](https://www.kaggle.com/datasets/stephanmatzka/predictive-maintenance-dataset-ai4i-2020) / UCI Machine Learning Repository
+This system is trained using the NASA CMAPSS turbofan degradation dataset.
 
-**Alternative:** The project includes a synthetic dataset generator (`src/data_loader.py → generate_synthetic_dataset`) so you can run the full pipeline without a Kaggle account.
+The dataset simulates progressive equipment degradation under operational conditions and is widely used for predictive maintenance research.
 
-### Input Features
+### Input Signals
 
-| Feature | Type | Description |
-|---|---|---|
-| temperature | float | Machine surface temperature (°C) |
-| vibration | float | Vibration amplitude (mm/s) |
-| pressure | float | Operating pressure (bar) |
-| voltage | float | Supply voltage (V) |
-| runtime_hours | float | Cumulative operating hours |
-| humidity | float | Ambient humidity (%) — optional |
-| rotational_speed | float | Shaft RPM — optional |
-| torque | float | Motor torque (Nm) — optional |
-| wear_level | float | Component wear 0–1 — optional |
+Sensor-based features used in this project include:
 
-### Targets
+* Temperature
+* Vibration
+* Pressure
+* Voltage
+* Runtime duration
 
-| Target | Type | Description |
-|---|---|---|
-| `failure` | int {0, 1} | Binary failure label |
-| `rul` | float | Remaining Useful Life (hours) |
+### Output Targets
+
+The system learns two targets:
+
+* Failure probability (classification)
+* Remaining useful life (regression)
 
 ---
 
-## 4. Methodology
+## Workflow Design
 
-```
-Raw CSV → Data Loading & Validation
-        → Exploratory Data Analysis
-        → Feature Engineering
-        → Preprocessing (Scaling, SMOTE)
-        → Model Training (CV + GridSearch)
-        → Evaluation & Explainability
-        → Streamlit Dashboard
-```
+System pipeline:
 
-### Key techniques
-
-- **SMOTE** to handle class imbalance in failure labels
-- **GridSearchCV** with stratified cross-validation for hyperparameter tuning
-- **CalibratedClassifierCV** for reliable failure probability estimates
-- **Threshold optimisation** — maximises F1 score for maintenance alerting
-- **SHAP** for global and local model explanations
-
----
-
-## 5. Models Used
-
-### Classification (Failure Prediction)
-
-| Model | Notes |
-|---|---|
-| Logistic Regression | Baseline |
-| Random Forest | Ensemble, robust to noise |
-| XGBoost | Gradient boosting, top performer |
-| LightGBM | Fast gradient boosting |
-| SVM (RBF kernel) | Good for non-linear boundaries |
-
-### Regression (RUL Estimation)
-
-| Model | Notes |
-|---|---|
-| Linear Regression | Baseline |
-| Random Forest Regressor | Robust ensemble |
-| XGBoost Regressor | Top performer |
-| LightGBM Regressor | Fast & accurate |
+Raw Data Collection
+↓
+Data Validation
+↓
+Cleaning & Normalization
+↓
+Feature Engineering
+↓
+Feature Scaling
+↓
+Class Balancing (SMOTE)
+↓
+Model Training
+↓
+Performance Evaluation
+↓
+Model Explainability
+↓
+Interactive Dashboard
 
 ---
 
-## 6. Results
+## Core Components
 
-> Results below are from the synthetic dataset (5,000 samples). Your results on real data may differ.
+### Data Processing
 
-### Classification Metrics (Best Model: XGBoost)
+Responsible for:
 
-| Metric | Score |
-|---|---|
-| Accuracy | ~0.94 |
-| Precision | ~0.91 |
-| Recall | ~0.89 |
-| F1 Score | ~0.90 |
-| ROC-AUC | ~0.97 |
-
-### Regression Metrics (Best Model: XGBoost Regressor)
-
-| Metric | Score |
-|---|---|
-| MAE | ~180 hours |
-| RMSE | ~310 hours |
-| R² | ~0.92 |
+* schema validation
+* null handling
+* duplicate removal
+* outlier capping
+* type conversion
 
 ---
 
-## 7. Project Structure
+### Feature Engineering
 
-```
+Transforms raw machine signals into enriched features for stronger predictive performance.
+
+Includes:
+
+* operational indicators
+* derived sensor interactions
+* engineered degradation signals
+
+---
+
+### Classification Pipeline
+
+Purpose:
+
+Identify machines at high failure risk.
+
+Models tested:
+
+* Logistic Regression
+* Random Forest
+* XGBoost
+* LightGBM
+* Support Vector Machine
+
+Final selected model:
+
+**Random Forest Classifier**
+
+---
+
+### Regression Pipeline
+
+Purpose:
+
+Estimate remaining operational lifespan.
+
+Models tested:
+
+* Linear Regression
+* Random Forest Regressor
+* XGBoost Regressor
+* LightGBM Regressor
+
+Final selected model:
+
+**Random Forest Regressor**
+
+---
+
+### Explainability Module
+
+To improve transparency, SHAP is integrated to interpret model behavior.
+
+This helps identify:
+
+* which sensor features matter most
+* what drives failure predictions
+* what affects RUL estimation
+
+---
+
+## Performance Results
+
+## Failure Detection Performance
+
+Best model: Random Forest
+
+Accuracy: 97.17%
+Precision: 84.99%
+Recall: 87.62%
+F1 Score: 86.28%
+ROC-AUC: 0.9896
+
+---
+
+## Remaining Useful Life Prediction
+
+Best model: Random Forest
+
+MAE: 24.92
+RMSE: 35.47
+R² Score: 0.7246
+
+---
+
+## Technical Stack
+
+Programming Language:
+
+Python
+
+Libraries:
+
+* scikit-learn
+* XGBoost
+* LightGBM
+* Pandas
+* NumPy
+* Matplotlib
+* SHAP
+* Streamlit
+
+---
+
+## Repository Structure
+
 predictive-maintenance/
-│
-├── data/
-│   ├── raw/                    # Original CSV files
-│   └── processed/              # Cleaned & feature-engineered data
-│
-├── notebooks/
-│   └── eda.ipynb               # Exploratory Data Analysis
-│
-├── src/
-│   ├── data_loader.py          # Load, validate, clean data
-│   ├── features.py             # Feature engineering
-│   ├── preprocessing.py        # Scaling, encoding, SMOTE, splits
-│   ├── train.py                # Model training + hyperparameter tuning
-│   ├── evaluate.py             # Metrics, confusion matrix, ROC curves
-│   ├── explain.py              # SHAP explainability
-│   └── utils.py                # Shared utilities
-│
-├── models/                     # Saved models (gitignored)
-│   ├── classifier.pkl
-│   ├── regressor.pkl
-│   ├── scaler.pkl
-│   ├── label_encoders.pkl
-│   └── feature_columns.pkl
-│
-├── reports/
-│   └── figures/                # Auto-generated plots
-│
-├── app.py                      # Streamlit dashboard
-├── requirements.txt
-├── README.md
-└── .gitignore
-```
+
+app.py
+prepare_cmapss.py
+requirements.txt
+
+data/
+models/
+reports/
+notebooks/
+
+src/
+├── data_loader.py
+├── preprocessing.py
+├── features.py
+├── train.py
+├── evaluate.py
+├── explain.py
+├── utils.py
 
 ---
 
-## 8. Installation
+## Setup Instructions
 
-### Prerequisites
+Clone repository:
 
-- Python 3.10 or higher
-- pip
+git clone <repository-url>
 
-### Steps
+Enter project directory:
 
-```bash
-# 1. Clone the repository
-git clone https://github.com/YOUR_USERNAME/predictive-maintenance.git
 cd predictive-maintenance
 
-# 2. Create a virtual environment
-python -m venv venv
-source venv/bin/activate          # Linux / macOS
-# venv\Scripts\activate           # Windows
+Create environment:
 
-# 3. Install dependencies
+python -m venv venv
+
+Activate environment:
+
+venv\Scripts\activate
+
+Install packages:
+
 pip install -r requirements.txt
 
-# 4. (Optional) Download dataset
-# Place your CSV at data/raw/sensor_data.csv
-# OR let the pipeline auto-generate a synthetic dataset
-```
-
 ---
 
-## 9. Usage
+## Run Training
 
-### A) Train the full pipeline (one command)
-
-```bash
 python src/train.py
-```
 
-This will:
-1. Generate/load raw data
-2. Clean and engineer features
-3. Preprocess with SMOTE
-4. Train all classifiers and regressors
-5. Select and tune the best models
-6. Save all artefacts to `models/`
+---
 
-### B) Evaluate models
+## Run Evaluation
 
-```bash
 python src/evaluate.py
-```
 
-### C) Generate SHAP explanations
+---
 
-```bash
-python src/explain.py
-```
+## Launch Dashboard
 
-### D) Run the interactive dashboard
-
-```bash
 streamlit run app.py
-```
-
-Then open [http://localhost:8501](http://localhost:8501) in your browser.
-
-### E) Run EDA notebook
-
-```bash
-jupyter notebook notebooks/eda.ipynb
-```
 
 ---
 
-## 10. Deployment
+## Why This Project Matters
 
-### Local Docker (optional)
+Industrial downtime is expensive.
 
-```dockerfile
-FROM python:3.11-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-COPY . .
-RUN python src/train.py
-EXPOSE 8501
-CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
-```
+A practical predictive maintenance system can:
 
-```bash
-docker build -t predictive-maintenance .
-docker run -p 8501:8501 predictive-maintenance
-```
+* reduce emergency failures
+* improve maintenance planning
+* increase equipment reliability
+* reduce operational cost
+* improve asset utilization
 
-### Cloud (Streamlit Community Cloud)
-
-1. Push to GitHub
-2. Go to [share.streamlit.io](https://share.streamlit.io)
-3. Connect your repo and set `app.py` as the entry point
-4. Add `requirements.txt` — Streamlit handles the rest
+This project demonstrates how machine learning can directly support industrial decision-making.
 
 ---
 
-## 11. Future Improvements
+## Future Development
 
-- **LSTM / Transformer** models for time-series RUL prediction
-- **Anomaly detection** (Isolation Forest, Autoencoder) for unsupervised failure signals
-- **MLflow** integration for experiment tracking
-- **REST API** with FastAPI for real-time scoring
-- **Kafka / MQTT** integration for live sensor stream ingestion
-- **Federated learning** for multi-factory deployment with privacy preservation
-- **Drift detection** (Evidently AI) for production model monitoring
-- **AutoML** search over a wider model space
+Planned improvements:
 
----
-
-## License
-
-MIT License — see `LICENSE` for details.
+* sequence modeling using LSTM
+* transformer-based predictive maintenance
+* live IoT integration
+* edge deployment
+* anomaly detection expansion
 
 ---
 
-*Built as a Master's in AI portfolio project demonstrating end-to-end ML engineering capabilities.*
+## Author
+
+Himaj Reddy
+
+Machine Learning | Applied AI | Industrial Analytics
